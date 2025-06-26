@@ -1,0 +1,88 @@
+# Environment & Secrets
+.env
+.env.*
+secrets/
+config/*.key
+config/*.pem
+
+# Container Data
+data/
+volumes/
+backups/
+
+# Logs
+logs/
+*.log
+nginx/logs/
+monitoring/logs/
+
+# SSL Certificates
+ssl/
+certs/
+nginx/ssl/
+
+# Node.js (if building custom)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Build outputs
+dist/
+build/
+target/
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+.docker/
+
+# Monitoring Data
+monitoring/data/
+prometheus/data/
+grafana/data/
+
+# Backup files
+*.bak
+*.backup
+*.old
+backups/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Runtime
+.pid
+.seed
+tmp/
+temp/
+
+# Testing
+coverage/
+.nyc_output
+test-results/
+
+# Deployment
+deploy.log
+deployment/
+
+# Private configuration
+local/
+private/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Cache
+.cache/
+nginx-cache/

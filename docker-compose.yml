@@ -1,0 +1,145 @@
+version: '3.8'
+
+services:
+  pangolin-app:
+    image: fosrl/pangolin:latest
+    container_name: pangolin-full
+    ports:
+      - "3000:3000"    # API Backend
+      - "8080:3002"    # Web-App Frontend
+    environment:
+      - NODE_ENV=production
+      - API_URL=http://localhost:3000
+      - SMARTKI_PM_URL=http://192.168.178.186:3100
+      - SMARTKI_OBSIDIAN_URL=http://192.168.178.187:3001
+      - JWT_SECRET=${JWT_SECRET:-smartki-pangolin-secret}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    volumes:
+      - pangolin_data:/app/data
+      - pangolin_logs:/app/logs
+      - ./config:/app/config:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - smartki-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.pangolin-web.rule=Host(`pangolin.haossl.de`)"
+      - "traefik.http.routers.pangolin-web.service=pangolin-web"
+      - "traefik.http.services.pangolin-web.loadbalancer.server.port=3002"
+      - "traefik.http.routers.pangolin-api.rule=Host(`pangolin.haossl.de`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.pangolin-api.service=pangolin-api"
+      - "traefik.http.services.pangolin-api.loadbalancer.server.port=3000"
+
+  nginx-proxy:
+    image: nginx:alpine
+    container_name: pangolin-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - nginx_logs:/var/log/nginx
+      - nginx_cache:/var/cache/nginx
+    depends_on:
+      - pangolin-app
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      - smartki-network
+    labels:
+      - "traefik.enable=false"
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: pangolin-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+    networks:
+      - smartki-network
+    profiles:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: pangolin-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-smartki123}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana:/etc/grafana/provisioning:ro
+    restart: unless-stopped
+    networks:
+      - smartki-network
+    profiles:
+      - monitoring
+
+  traefik:
+    image: traefik:v3.0
+    container_name: pangolin-traefik
+    ports:
+      - "8080:8080"  # Traefik Dashboard
+      - "8443:443"   # HTTPS
+    command:
+      - "--api.dashboard=true"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--log.level=INFO"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik_data:/data
+    restart: unless-stopped
+    networks:
+      - smartki-network
+    profiles:
+      - traefik
+
+volumes:
+  pangolin_data:
+    driver: local
+  pangolin_logs:
+    driver: local
+  nginx_logs:
+    driver: local
+  nginx_cache:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+  traefik_data:
+    driver: local
+
+networks:
+  smartki-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
