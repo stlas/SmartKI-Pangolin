@@ -1,88 +1,42 @@
-# Environment & Secrets
+# SmartKI-Pangolin Gitignore
+
+# Environment
 .env
 .env.*
-secrets/
-config/*.key
-config/*.pem
+config/local.*
 
-# Container Data
-data/
-volumes/
-backups/
+# Credentials
+*credentials*
+*secret*
+*.key
+*.pem
+*password*
+
+# Docker
+docker-compose.override.yml
+.dockerignore
 
 # Logs
 logs/
 *.log
-nginx/logs/
-monitoring/logs/
 
-# SSL Certificates
-ssl/
-certs/
-nginx/ssl/
+# Data
+data/
+db/
 
-# Node.js (if building custom)
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Build outputs
-dist/
-build/
-target/
-
-# Docker
-.dockerignore
-docker-compose.override.yml
-.docker/
-
-# Monitoring Data
-monitoring/data/
-prometheus/data/
-grafana/data/
-
-# Backup files
-*.bak
-*.backup
-*.old
-backups/
+# System
+.DS_Store
+Thumbs.db
 
 # IDE
 .vscode/
 .idea/
-*.swp
-*.swo
-*~
 
-# OS
-.DS_Store
-Thumbs.db
+# Backups
+*.backup
+*.bak
 
-# Runtime
-.pid
-.seed
-tmp/
-temp/
-
-# Testing
-coverage/
-.nyc_output
-test-results/
-
-# Deployment
-deploy.log
-deployment/
-
-# Private configuration
-local/
-private/
-
-# Database files
-*.db
-*.sqlite
-*.sqlite3
-
-# Cache
+# Temporary
+*.tmp
+*.temp
 .cache/
-nginx-cache/
